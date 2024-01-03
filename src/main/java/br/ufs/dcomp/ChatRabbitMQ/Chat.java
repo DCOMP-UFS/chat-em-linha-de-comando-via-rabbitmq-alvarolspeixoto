@@ -42,7 +42,10 @@ public class Chat {
                       //(queue-name, durable, exclusive, auto-delete, params); 
     channel.queueDeclare(QUEUE_NAME, false,   false,     false,       null);
     
+    // Declara o usuário atual como um consumidor
     Consumer consumer = new DefaultConsumer(channel) {
+      // Função que roda o tempo todo monitorando as mensagens que são recebidas
+      // e lida com elas.
       public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)           throws IOException {
 
         String message = new String(body, "UTF-8");
