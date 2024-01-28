@@ -4,7 +4,6 @@ import com.rabbitmq.client.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.TimeoutException;
 import java.time.ZonedDateTime;
 import java.text.MessageFormat;
 
@@ -12,15 +11,13 @@ public class Client {
 
     private String username;
     private String recipient;
-    private Connection connection;
     private Channel channel;
     private final String QUEUE_NAME;
 
-    public Client(String username, Connection connection) throws IOException {
+    public Client(String username, Channel channel) throws IOException {
         this.username = username;
         this.QUEUE_NAME = username;
-        this.connection = connection;
-        this.channel = connection.createChannel();
+        this.channel = channel;
     }
 
     public void startClient() throws IOException {
@@ -36,18 +33,15 @@ public class Client {
 
                 String message = new String(body, "UTF-8");
                 System.out.println("\n" + message);
-                System.out.print("@" + Chat.promptText);
+                if (!Chat.promptText.equals("")) {
+                    System.out.print(Chat.promptText);
+                }
 
             }
         };
 
         // (queue-name, autoAck, consumer);
         channel.basicConsume(QUEUE_NAME, true, consumer);
-    }
-
-    public void closeConnection() throws IOException, TimeoutException {
-        channel.close();
-        connection.close();
     }
 
     public void setRecipient(String recipient) throws IOException {
