@@ -31,6 +31,8 @@ public class Chat {
     System.out.print("User: ");
     myUser = scanner.nextLine().trim();
     Client client = new Client(myUser, connection);
+    client.startClient();
+
     promptText = myUser + promptSymbol;
 
     do {
