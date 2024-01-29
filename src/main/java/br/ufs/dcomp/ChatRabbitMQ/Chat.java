@@ -2,6 +2,7 @@ package br.ufs.dcomp.ChatRabbitMQ;
 
 import com.rabbitmq.client.*;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,8 +14,14 @@ public class Chat {
   public static String promptText = "";
   public static String[] commands = { "addGroup", "addUser", "delFromGroup", "removeGroup" };
 
+  public enum PromptMode {
+    NONE,
+    PRIVATE,
+    GROUP
+  }
+
   public static void main(String[] argv) throws Exception {
-    String host = "54.89.54.95";
+    String host = "3.91.70.69";
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost(host); // Alterar
     factory.setUsername("admin"); // Alterar
@@ -25,36 +32,52 @@ public class Chat {
 
     // Identificador para saber se as mensagens digitadas
     // devem ser enviadas para alguém
-    int promptMode = 0;
-    String myUser;
+    PromptMode promptMode = PromptMode.NONE;
     String promptSymbol = ">>";
-    String recipient = "";
+    String currentUser = "";
+    String currentRecipient = "";
     String currentGroup = "";
     String input;
     Scanner scanner = new Scanner(System.in);
 
     System.out.print("User: ");
-    myUser = scanner.nextLine().trim();
-    Client client = new Client(myUser, channel);
+    currentUser = scanner.nextLine().trim();
+    Client client = new Client(currentUser, channel);
     client.startClient();
     Group.setChannel(channel);
+    Group.setConnection(connection);
 
-    promptText = "@" + myUser + promptSymbol;
+    /*
+     * channel.addShutdownListener(cause -> {
+     * System.out.println("O canal foi fechado: " + cause);
+     * try {
+     * // TODO: NÃO FUNCIONA AINDA
+     * Channel newChannel = connection.createChannel();
+     * Group.setChannel(newChannel);
+     * client.setChannel(newChannel);
+     * } catch (IOException e) {
+     * e.printStackTrace();
+     * }
+     * });
+     */
+
+    promptText = "@" + currentUser + promptSymbol;
 
     do {
       System.out.print(promptText);
       input = scanner.nextLine().trim();
       // Checa o input para saber se é um usuário e checar se é diferente do
       // meu próprio usuário
-      if (input.startsWith("@") && input.length() > 1 && !input.substring(1).equals(myUser)) {
+
+      if (input.startsWith("@") && input.length() > 1 && !input.substring(1).equals(currentUser)) {
         // Pega o destinatário sem o @
-        recipient = input.substring(1);
-        client.setRecipient(recipient);
+        currentRecipient = input.substring(1);
+        client.setRecipient(currentRecipient);
         // Atualiza o que deve ser printado no prompt
-        promptText = "@" + recipient + promptSymbol;
+        promptText = "@" + currentRecipient + promptSymbol;
         // Muda o modo de prompt. Agora tudo o que é digitado no prompt
         // irá ser enviado por destinatário atual
-        promptMode = 1;
+        promptMode = PromptMode.PRIVATE;
 
         // Checa o modo do prompt e evita que "quit" seja enviado para o
         // destinatário
@@ -67,32 +90,44 @@ public class Chat {
 
           Method method;
           List<Object> temp = Arrays.asList((Object[]) args);
-          List<Object> argsList = new ArrayList<Object>(temp);
+          List<Object> argList = new ArrayList<Object>(temp);
 
-          argsList.remove(0);
-          if (methodStr.equals("removeGroup")) {
+          argList.remove(0);
+          if (methodStr.equals("removeGroup") || methodStr.equals("addGroup")) {
 
             method = Group.class.getDeclaredMethod(methodStr, String.class);
+            promptMode = PromptMode.NONE;
+            promptText = "@" + currentUser + promptSymbol;
+            
           } else {
             method = Group.class.getDeclaredMethod(methodStr, String.class, String.class);
           }
 
-          Object[] test = argsList.toArray();
+          Object[] objArgs = argList.toArray();
 
-          method.invoke(null, test);
-          System.out.println("tá chegando aqui!");
+          try {
+
+            method.invoke(null, objArgs);
+
+          } catch (Exception e) {
+            System.out.println("Erro ao chamar o método \"" + methodStr + "\". " + "Confira o número de argumentos.");
+          }
+        } else {
+          System.out.println("[!] O comando \"" + methodStr + "\" não existe.");
         }
       } else if (input.startsWith("#") && input.length() > 1) {
 
-        promptMode = 2;
-        currentGroup = input.substring(1);
-        promptText = "#" + currentGroup + promptSymbol;
+        if (Group.checkIfGroupExists(input.substring(1))) {
+          promptMode = PromptMode.GROUP;
+          currentGroup = input.substring(1);
+          promptText = "#" + currentGroup + promptSymbol;
+        }
 
-      } else if (promptMode == 2 && !input.equals("quit")) {
+      } else if (promptMode == PromptMode.GROUP && !input.equals("quit")) {
 
-        Group.sendMessage(currentGroup, myUser, input);
+        Group.sendMessage(currentGroup, currentUser, input);
 
-      } else if (promptMode == 1 && !input.equals("quit")) {
+      } else if (promptMode == PromptMode.PRIVATE && !input.equals("quit")) {
 
         client.sendMessage(input);
 

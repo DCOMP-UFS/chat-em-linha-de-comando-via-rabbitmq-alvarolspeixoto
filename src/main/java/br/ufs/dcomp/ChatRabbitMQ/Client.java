@@ -9,15 +9,15 @@ import java.text.MessageFormat;
 
 public class Client {
 
-    private String username;
+    private static String username;
     private String recipient;
-    private Channel channel;
+    private static Channel channel;
     private final String QUEUE_NAME;
 
     public Client(String username, Channel channel) throws IOException {
-        this.username = username;
+        Client.username = username;
         this.QUEUE_NAME = username;
-        this.channel = channel;
+        Client.channel = channel;
     }
 
     public void startClient() throws IOException {
@@ -66,6 +66,14 @@ public class Client {
         message = MessageFormat.format("({0}) {1} diz: {2}", formattedDateTime, username, message);
 
         return message;
+    }
+
+    public static void setChannel(Channel channel) {
+        Client.channel = channel;
+    }
+
+    public static String getUsername() {
+        return username;
     }
 
 }
