@@ -1,8 +1,6 @@
 package br.ufs.dcomp.ChatRabbitMQ;
 
 import com.rabbitmq.client.*;
-
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,28 +45,14 @@ public class Chat {
     Group.setChannel(channel);
     Group.setConnection(connection);
 
-    /*
-     * channel.addShutdownListener(cause -> {
-     * System.out.println("O canal foi fechado: " + cause);
-     * try {
-     * // TODO: NÃO FUNCIONA AINDA
-     * Channel newChannel = connection.createChannel();
-     * Group.setChannel(newChannel);
-     * client.setChannel(newChannel);
-     * } catch (IOException e) {
-     * e.printStackTrace();
-     * }
-     * });
-     */
-
     promptText = "@" + currentUser + promptSymbol;
 
     do {
       System.out.print(promptText);
       input = scanner.nextLine().trim();
+
       // Checa o input para saber se é um usuário e checar se é diferente do
       // meu próprio usuário
-
       if (input.startsWith("@") && input.length() > 1 && !input.substring(1).equals(currentUser)) {
         // Pega o destinatário sem o @
         currentRecipient = input.substring(1);
