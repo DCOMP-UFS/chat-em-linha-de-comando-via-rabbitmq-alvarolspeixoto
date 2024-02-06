@@ -19,7 +19,7 @@ public class Chat {
   }
 
   public static void main(String[] argv) throws Exception {
-    String host = "3.91.70.69";
+    String host = "107.22.85.20";
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost(host); // Alterar
     factory.setUsername("admin"); // Alterar
@@ -109,11 +109,11 @@ public class Chat {
 
       } else if (promptMode == PromptMode.GROUP && !input.equals("quit")) {
 
-        Group.sendMessage(currentGroup, currentUser, input);
+        client.sendMessage(input, currentUser, currentGroup);
 
       } else if (promptMode == PromptMode.PRIVATE && !input.equals("quit")) {
 
-        client.sendMessage(input);
+        client.sendMessage(input, currentUser, "");
 
       }
     } while (!input.equals("quit"));

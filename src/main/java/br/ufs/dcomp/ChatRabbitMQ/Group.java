@@ -31,11 +31,11 @@ public class Group {
         }
     }
 
-    public static void sendMessage(String group, String sender, String message) throws IOException {
+    /* public static void sendMessage(String group, String sender, String message) throws IOException {
         // temporário
         message = "Mensagem do grupo " + group + " enviada por " + sender + ": " + message;
         channel.basicPublish(group, "", null, message.getBytes("UTF-8"));
-    }
+    } */
 
     public static void delFromGroup(String username, String group) {
         try {
