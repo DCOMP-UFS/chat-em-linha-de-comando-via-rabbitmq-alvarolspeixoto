@@ -74,15 +74,30 @@ public class Client {
         channel.queueDeclare(recipient, false, false, false, null);
     }
 
-    public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
-
+    private String getFormattedDate() {
         String zone = "America/Sao_Paulo";
         ZonedDateTime dateTime = ZonedDateTime.now(java.time.ZoneId.of(zone));
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String date = dateTime.format(dateFormatter);
+
+        return date;
+    }
+
+    private String getFormattedTime() {
+        String zone = "America/Sao_Paulo";
+        ZonedDateTime dateTime = ZonedDateTime.now(java.time.ZoneId.of(zone));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         String time = dateTime.format(timeFormatter);
+
+        return time;
+
+    }
+
+    public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
+        
+        String date = getFormattedDate();
+        String time = getFormattedTime();
 
         MessageProto.Content.Builder content = MessageProto.Content.newBuilder();
         content.setType("text/plain");
