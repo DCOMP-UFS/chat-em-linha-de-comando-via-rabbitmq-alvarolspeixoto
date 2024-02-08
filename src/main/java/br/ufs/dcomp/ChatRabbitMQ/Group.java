@@ -23,25 +23,15 @@ public class Group {
         channel.queueBind(Client.getUsername(), group, "");
     }
 
-    public static void addUser(String username, String group) {
-        try {
+    public static void addUser(String username, String group) throws IOException {
+        if (checkIfUserExists(username) && checkIfGroupExists(group)) {
             channel.queueBind(username, group, "");
-        } catch (IOException e) {
-            System.out.println("[!] Erro ao adicionar usuário \"" + username + "\". Usuário/grupo inválidos.");
         }
     }
 
-    /* public static void sendMessage(String group, String sender, String message) throws IOException {
-        // temporário
-        message = "Mensagem do grupo " + group + " enviada por " + sender + ": " + message;
-        channel.basicPublish(group, "", null, message.getBytes("UTF-8"));
-    } */
-
-    public static void delFromGroup(String username, String group) {
-        try {
+    public static void delFromGroup(String username, String group) throws IOException {
+        if (checkIfUserExists(username) && checkIfGroupExists(group)) {
             channel.queueUnbind(username, group, "");
-        } catch (IOException e) {
-            System.out.println("[!] Erro ao remover usuário \"" + username + "\" do grupo \"" + group + "\".");
         }
     }
 
@@ -60,6 +50,19 @@ public class Group {
             return true;
         } catch (IOException e) {
             System.out.println("[!] O grupo \"" + group + "\" não existe.");
+            Channel newChannel = connection.createChannel();
+            Group.channel = newChannel;
+            Client.setChannel(newChannel);
+            return false;
+        }
+    }
+
+    private static boolean checkIfUserExists(String username) throws IOException {
+        try {
+            channel.queueDeclarePassive(username);
+            return true;
+        } catch (IOException e) {
+            System.out.println("[!] O usuário \"" + username + "\" não existe.");
             Channel newChannel = connection.createChannel();
             Group.channel = newChannel;
             Client.setChannel(newChannel);

@@ -13,13 +13,13 @@ public class Chat {
   public static String[] commands = { "addGroup", "addUser", "delFromGroup", "removeGroup" };
 
   public enum PromptMode {
-    NONE,
-    PRIVATE,
-    GROUP
+    NONE, // o que é digitado não é enviado para ninguém
+    PRIVATE, // enviado p/ destinatário específico
+    GROUP // enviado p/ grupo
   }
 
   public static void main(String[] argv) throws Exception {
-    String host = "107.22.85.20";
+    String host = "3.88.23.175";
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost(host); // Alterar
     factory.setUsername("admin"); // Alterar
@@ -28,8 +28,6 @@ public class Chat {
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
 
-    // Identificador para saber se as mensagens digitadas
-    // devem ser enviadas para alguém
     PromptMode promptMode = PromptMode.NONE;
     String promptSymbol = ">>";
     String currentUser = "";
@@ -51,20 +49,13 @@ public class Chat {
       System.out.print(promptText);
       input = scanner.nextLine().trim();
 
-      // Checa o input para saber se é um usuário e checar se é diferente do
-      // meu próprio usuário
       if (input.startsWith("@") && input.length() > 1 && !input.substring(1).equals(currentUser)) {
-        // Pega o destinatário sem o @
+
         currentRecipient = input.substring(1);
         client.setRecipient(currentRecipient);
-        // Atualiza o que deve ser printado no prompt
         promptText = "@" + currentRecipient + promptSymbol;
-        // Muda o modo de prompt. Agora tudo o que é digitado no prompt
-        // irá ser enviado por destinatário atual
         promptMode = PromptMode.PRIVATE;
 
-        // Checa o modo do prompt e evita que "quit" seja enviado para o
-        // destinatário
       } else if (input.charAt(0) == '!') {
 
         String[] args = input.split(" ");

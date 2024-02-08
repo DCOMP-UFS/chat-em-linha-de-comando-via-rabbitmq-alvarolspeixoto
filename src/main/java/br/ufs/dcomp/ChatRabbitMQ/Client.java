@@ -64,15 +64,13 @@ public class Client {
         if (group.equals("")) {
             return MessageFormat.format("\n({0} às {1}) {2} diz: {3}", date, time, sender, messageBody);
         }
-        // (21/09/2018 às 21:50) joaosantos#amigos diz:
+
         return MessageFormat.format("\n({0} às {1}) {2}#{3} diz: {4}", date, time, sender, group, messageBody);
 
     }
 
     public void setRecipient(String recipient) throws IOException {
         this.recipient = recipient;
-
-        // Cria uma fila com o nome do novo destinatário
         channel.queueDeclare(recipient, false, false, false, null);
     }
 
