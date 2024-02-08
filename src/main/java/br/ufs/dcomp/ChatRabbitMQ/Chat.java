@@ -19,7 +19,7 @@ public class Chat {
   }
 
   public static void main(String[] argv) throws Exception {
-    String host = "3.88.23.175";
+    String host = "23.20.140.25";
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost(host); // Alterar
     factory.setUsername("admin"); // Alterar
@@ -43,7 +43,7 @@ public class Chat {
     Group.setChannel(channel);
     Group.setConnection(connection);
 
-    promptText = "@" + currentUser + promptSymbol;
+    promptText = promptSymbol;
 
     do {
       System.out.print(promptText);
