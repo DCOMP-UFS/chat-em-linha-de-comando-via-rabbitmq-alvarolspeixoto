@@ -19,19 +19,22 @@ public class Group {
 
     public static void addGroup(String group) throws IOException {
 
-        channel.exchangeDeclare(group, "fanout", false, false, null);
-        channel.queueBind(Client.getUsername(), group, "");
+        channel.exchangeDeclare(group, "direct", false, false, null);
+        channel.queueBind("text-" + Client.getUsername(), group, "t");
+        channel.queueBind("file-" + Client.getUsername(), group, "f");
     }
 
     public static void addUser(String username, String group) throws IOException {
         if (checkIfUserExists(username) && checkIfGroupExists(group)) {
-            channel.queueBind(username, group, "");
+            channel.queueBind("text-" + username, group, "t");
+            channel.queueBind("file-" + username, group, "f");
         }
     }
 
     public static void delFromGroup(String username, String group) throws IOException {
         if (checkIfUserExists(username) && checkIfGroupExists(group)) {
-            channel.queueUnbind(username, group, "");
+            channel.queueUnbind("text-" + username, group, "t");
+            channel.queueUnbind("file-" + username, group, "f");
         }
     }
 
@@ -59,7 +62,7 @@ public class Group {
 
     private static boolean checkIfUserExists(String username) throws IOException {
         try {
-            channel.queueDeclarePassive(username);
+            channel.queueDeclarePassive("text-" + username);
             return true;
         } catch (IOException e) {
             System.out.println("[!] O usuário \"" + username + "\" não existe.");

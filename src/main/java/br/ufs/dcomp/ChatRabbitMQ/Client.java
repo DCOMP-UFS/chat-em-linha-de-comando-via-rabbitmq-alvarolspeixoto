@@ -3,10 +3,10 @@ package br.ufs.dcomp.ChatRabbitMQ;
 import com.rabbitmq.client.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.time.format.DateTimeFormatter;
-import java.time.ZonedDateTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
-
 import com.google.protobuf.*;
 
 public class Client {
@@ -14,19 +14,23 @@ public class Client {
     private static String username;
     private String recipient;
     private static Channel channel;
-    private final String QUEUE_NAME;
+    private final String textQueueName;
+    private final String fileQueueName;
 
     public Client(String username, Channel channel) throws IOException {
         Client.username = username;
-        this.QUEUE_NAME = username;
+        this.textQueueName = "text-" + username;
+        this.fileQueueName = "file-" + username;
         Client.channel = channel;
     }
 
     public void startClient() throws IOException {
 
         // (queue-name, durable, exclusive, auto-delete, params);
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-        Consumer consumer = new DefaultConsumer(channel) {
+        channel.queueDeclare(textQueueName, false, false, false, null);
+        channel.queueDeclare(fileQueueName, false, false, false, null);
+
+        Consumer textConsumer = new DefaultConsumer(channel) {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
 
@@ -35,20 +39,78 @@ public class Client {
                 if (message.getSender().equals(username)) {
                     return;
                 }
-                
+
                 String formattedMessage = formatMessage(message);
 
                 System.out.println(formattedMessage);
 
-                if (!Chat.promptText.equals("")) {
-                    System.out.print(Chat.promptText);
+                if (!Chat.getPromptText().equals("")) {
+                    System.out.print(Chat.getPromptText());
                 }
 
             }
         };
 
         // (queue-name, autoAck, consumer);
-        channel.basicConsume(QUEUE_NAME, true, consumer);
+        channel.basicConsume(textQueueName, true, textConsumer);
+
+        Consumer fileConsumer = new DefaultConsumer(channel) {
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+
+                MessageProto.Message message = MessageProto.Message.parseFrom(body);
+                String sender = message.getSender();
+
+                if (message.getSender().equals(username)) {
+                    return;
+                }
+
+                // refatorar num método de formatar mensagem de arquivo recebido
+                String date = message.getDate();
+                String time = message.getTime();
+                String group = message.getGroup();
+
+                MessageProto.Content content = message.getContent();
+                byte[] file = content.getBody().toByteArray();
+                String fileName = content.getName();
+
+                String defaultOutputPath = "/home/alvaro022/files";
+
+                try {
+                    Path outputPath = Paths.get(defaultOutputPath, fileName);
+
+                    if (!Files.exists(outputPath.getParent())) {
+                        Files.createDirectories(outputPath.getParent());
+                    }
+
+                    Files.write(outputPath, file);
+                    String messageToPrint;
+                    if (group.equals("")) {
+
+                        messageToPrint = MessageFormat.format("\n({0} às {1}) Arquivo {2} recebido de @{3}!",
+                                date, time, fileName, sender);
+                    } else {
+                        messageToPrint = MessageFormat.format("\n({0} às {1}) Arquivo {2} recebido do grupo @{3}!",
+                                date, time, fileName, group);
+                    }
+                    System.out.println(messageToPrint);
+                    System.out.println("Arquivo salvo em: " + outputPath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // System.err.println("Erro ao salvar o arquivo " + e.getMessage());
+                }
+
+                // System.out.println("Opa, arquivo recebido.");
+
+                if (!Chat.getPromptText().equals("")) {
+                    System.out.print(Chat.getPromptText());
+                }
+
+            }
+        };
+
+        channel.basicConsume(fileQueueName, true, fileConsumer);
+
     }
 
     private String formatMessage(MessageProto.Message message) {
@@ -71,33 +133,14 @@ public class Client {
 
     public void setRecipient(String recipient) throws IOException {
         this.recipient = recipient;
-        channel.queueDeclare(recipient, false, false, false, null);
-    }
-
-    private String getFormattedDate() {
-        String zone = "America/Sao_Paulo";
-        ZonedDateTime dateTime = ZonedDateTime.now(java.time.ZoneId.of(zone));
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String date = dateTime.format(dateFormatter);
-
-        return date;
-    }
-
-    private String getFormattedTime() {
-        String zone = "America/Sao_Paulo";
-        ZonedDateTime dateTime = ZonedDateTime.now(java.time.ZoneId.of(zone));
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        String time = dateTime.format(timeFormatter);
-
-        return time;
-
+        channel.queueDeclare("text-" + recipient, false, false, false, null);
+        channel.queueDeclare("file-" + recipient, false, false, false, null);
     }
 
     public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
-        
-        String date = getFormattedDate();
-        String time = getFormattedTime();
+
+        String date = Utils.getFormattedDate();
+        String time = Utils.getFormattedTime();
 
         MessageProto.Content.Builder content = MessageProto.Content.newBuilder();
         content.setType("text/plain");
@@ -114,15 +157,24 @@ public class Client {
         MessageProto.Message message = messageProto.build();
 
         if (group.equals("")) {
-            channel.basicPublish("", recipient, null, message.toByteArray());
+            channel.basicPublish("", "text-" + recipient, null, message.toByteArray());
         } else {
-            channel.basicPublish(group, "", null, message.toByteArray());
+            channel.basicPublish(group, "t", null, message.toByteArray());
         }
 
     }
 
+    public void sendFile(String filePath, String currentUser, String currentRecipient, String currentGroup) {
+        new FileSender(filePath, currentUser, currentRecipient, currentGroup)
+                .start();
+    }
+
     public static void setChannel(Channel channel) {
         Client.channel = channel;
+    }
+
+    public static Channel getChannel() {
+        return Client.channel;
     }
 
     public static String getUsername() {
