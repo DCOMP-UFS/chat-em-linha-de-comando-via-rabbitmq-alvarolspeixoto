@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
@@ -25,6 +26,7 @@ public class Chat {
   public static void setup(String host, String username, String password) throws IOException, TimeoutException {
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost(host);
+    factory.setPort(5672);
     factory.setUsername(username);
     factory.setPassword(password);
     factory.setVirtualHost("/");
@@ -51,8 +53,14 @@ public class Chat {
   }
 
   public static void main(String[] argv) throws Exception {
-    String host = "52.21.205.214";
-    Chat.setup(host, "admin", "password");
+
+    Properties properties = PropertiesUtil.getProp();
+
+    String host = properties.getProperty("rabbitmq.host");
+    String user = properties.getProperty("rabbitmq.user");
+    String password = properties.getProperty("rabbitmq.password");
+
+    Chat.setup(host, user, password);
     String input;
     Scanner scanner = new Scanner(System.in);
 
