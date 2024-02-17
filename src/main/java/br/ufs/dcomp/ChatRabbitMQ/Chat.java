@@ -54,7 +54,7 @@ public class Chat {
 
   public static void main(String[] argv) throws Exception {
 
-    Properties properties = PropertiesUtil.getProp();
+    Properties properties = PropertiesUtil.getProps();
 
     String host = properties.getProperty("rabbitmq.host");
     String user = properties.getProperty("rabbitmq.user");
