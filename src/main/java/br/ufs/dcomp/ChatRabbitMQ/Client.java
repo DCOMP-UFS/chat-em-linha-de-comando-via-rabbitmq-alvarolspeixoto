@@ -14,13 +14,15 @@ public class Client {
     private static String username;
     private String recipient;
     private static Channel channel;
-    private final String textQueueName;
-    private final String fileQueueName;
+    private static String textQueueName;
+    private static String fileQueueName;
+    private static Consumer textConsumer;
+    private static Consumer fileConsumer;
 
     public Client(String username, Channel channel) throws IOException {
         Client.username = username;
-        this.textQueueName = "text-" + username;
-        this.fileQueueName = "file-" + username;
+        Client.textQueueName = "text-" + username;
+        Client.fileQueueName = "file-" + username;
         Client.channel = channel;
     }
 
@@ -53,6 +55,7 @@ public class Client {
 
         // (queue-name, autoAck, consumer);
         channel.basicConsume(textQueueName, true, textConsumer);
+        Client.textConsumer = textConsumer;
 
         Consumer fileConsumer = new DefaultConsumer(channel) {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
@@ -110,6 +113,7 @@ public class Client {
         };
 
         channel.basicConsume(fileQueueName, true, fileConsumer);
+        Client.fileConsumer = fileConsumer;
 
     }
 
@@ -179,6 +183,22 @@ public class Client {
 
     public static String getUsername() {
         return username;
+    }
+
+    public static String getTextQueueName() {
+        return textQueueName;
+    }
+
+    public static String getFileQueueName() {
+        return fileQueueName;
+    }
+
+    public static Consumer getTextConsumer() {
+        return textConsumer;
+    }
+
+    public static Consumer getFileConsumer() {
+        return fileConsumer;
     }
 
 }

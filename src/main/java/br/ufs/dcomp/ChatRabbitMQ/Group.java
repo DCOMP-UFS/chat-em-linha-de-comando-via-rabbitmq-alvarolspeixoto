@@ -54,6 +54,8 @@ public class Group {
         } catch (IOException e) {
             System.out.println("[!] O grupo \"" + group + "\" não existe.");
             Channel newChannel = connection.createChannel();
+            newChannel.basicConsume(Client.getTextQueueName(), true, Client.getTextConsumer());
+            newChannel.basicConsume(Client.getFileQueueName(), true, Client.getFileConsumer());
             Group.channel = newChannel;
             Client.setChannel(newChannel);
             return false;
@@ -67,6 +69,8 @@ public class Group {
         } catch (IOException e) {
             System.out.println("[!] O usuário \"" + username + "\" não existe.");
             Channel newChannel = connection.createChannel();
+            newChannel.basicConsume(Client.getTextQueueName(), true, Client.getTextConsumer());
+            newChannel.basicConsume(Client.getFileQueueName(), true, Client.getFileConsumer());
             Group.channel = newChannel;
             Client.setChannel(newChannel);
             return false;
