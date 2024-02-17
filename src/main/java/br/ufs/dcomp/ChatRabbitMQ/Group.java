@@ -20,21 +20,21 @@ public class Group {
     public static void addGroup(String group) throws IOException {
 
         channel.exchangeDeclare(group, "direct", false, false, null);
-        channel.queueBind("text-" + Client.getUsername(), group, "t");
-        channel.queueBind("file-" + Client.getUsername(), group, "f");
+        channel.queueBind(Client.getUsername() + "-text", group, "t");
+        channel.queueBind(Client.getUsername() + "-file", group, "f");
     }
 
     public static void addUser(String username, String group) throws IOException {
         if (checkIfUserExists(username) && checkIfGroupExists(group)) {
-            channel.queueBind("text-" + username, group, "t");
-            channel.queueBind("file-" + username, group, "f");
+            channel.queueBind(username + "text", group, "t");
+            channel.queueBind(username + "-file", group, "f");
         }
     }
 
     public static void delFromGroup(String username, String group) throws IOException {
         if (checkIfUserExists(username) && checkIfGroupExists(group)) {
-            channel.queueUnbind("text-" + username, group, "t");
-            channel.queueUnbind("file-" + username, group, "f");
+            channel.queueUnbind(username + "-text", group, "t");
+            channel.queueUnbind(username + "-file" , group, "f");
         }
     }
 
@@ -64,7 +64,7 @@ public class Group {
 
     private static boolean checkIfUserExists(String username) throws IOException {
         try {
-            channel.queueDeclarePassive("text-" + username);
+            channel.queueDeclarePassive(username + "-text");
             return true;
         } catch (IOException e) {
             System.out.println("[!] O usuário \"" + username + "\" não existe.");

@@ -21,8 +21,8 @@ public class Client {
 
     public Client(String username, Channel channel) throws IOException {
         Client.username = username;
-        Client.textQueueName = "text-" + username;
-        Client.fileQueueName = "file-" + username;
+        Client.textQueueName = username + "-text";
+        Client.fileQueueName = username + "-file";
         Client.channel = channel;
     }
 
@@ -137,8 +137,8 @@ public class Client {
 
     public void setRecipient(String recipient) throws IOException {
         this.recipient = recipient;
-        channel.queueDeclare("text-" + recipient, false, false, false, null);
-        channel.queueDeclare("file-" + recipient, false, false, false, null);
+        channel.queueDeclare(recipient + "-text", false, false, false, null);
+        channel.queueDeclare(recipient + "-file" , false, false, false, null);
     }
 
     public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
@@ -161,7 +161,7 @@ public class Client {
         MessageProto.Message message = messageProto.build();
 
         if (group.equals("")) {
-            channel.basicPublish("", "text-" + recipient, null, message.toByteArray());
+            channel.basicPublish("", recipient + "-text" , null, message.toByteArray());
         } else {
             channel.basicPublish(group, "t", null, message.toByteArray());
         }
