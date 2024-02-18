@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.HashMap;
+
 import com.google.protobuf.*;
 
 public class Client {
@@ -18,19 +20,24 @@ public class Client {
     private static String fileQueueName;
     private static Consumer textConsumer;
     private static Consumer fileConsumer;
+    private HashMap<String, Object> queueCreationArgs;
 
     public Client(String username, Channel channel) throws IOException {
         Client.username = username;
         Client.textQueueName = username + "-text";
         Client.fileQueueName = username + "-file";
         Client.channel = channel;
+        queueCreationArgs = new HashMap<>();
+        queueCreationArgs.put("x-queue-type", "quorum");
+        queueCreationArgs.put("x-quorum-initial-group-size", 3);
+        queueCreationArgs.put("x-quorum-group-size", 3);
     }
 
     public void startClient() throws IOException {
 
         // (queue-name, durable, exclusive, auto-delete, params);
-        channel.queueDeclare(textQueueName, false, false, false, null);
-        channel.queueDeclare(fileQueueName, false, false, false, null);
+        createQueueDefault(textQueueName);
+        createQueueDefault(fileQueueName);
 
         Consumer textConsumer = new DefaultConsumer(channel) {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
@@ -99,11 +106,9 @@ public class Client {
                     System.out.println(messageToPrint);
                     System.out.println("Arquivo salvo em: " + outputPath);
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    // System.err.println("Erro ao salvar o arquivo " + e.getMessage());
+                    // e.printStackTrace();
+                    System.err.println("Erro ao salvar o arquivo " + e.getMessage());
                 }
-
-                // System.out.println("Opa, arquivo recebido.");
 
                 if (!Chat.getPromptText().equals("")) {
                     System.out.print(Chat.getPromptText());
@@ -137,8 +142,8 @@ public class Client {
 
     public void setRecipient(String recipient) throws IOException {
         this.recipient = recipient;
-        channel.queueDeclare(recipient + "-text", false, false, false, null);
-        channel.queueDeclare(recipient + "-file" , false, false, false, null);
+        createQueueDefault(recipient + "-text");
+        createQueueDefault(recipient + "-file");
     }
 
     public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
@@ -161,7 +166,7 @@ public class Client {
         MessageProto.Message message = messageProto.build();
 
         if (group.equals("")) {
-            channel.basicPublish("", recipient + "-text" , null, message.toByteArray());
+            channel.basicPublish("", recipient + "-text", null, message.toByteArray());
         } else {
             channel.basicPublish(group, "t", null, message.toByteArray());
         }
@@ -171,6 +176,10 @@ public class Client {
     public void sendFile(String filePath, String currentUser, String currentRecipient, String currentGroup) {
         new FileSender(filePath, currentUser, currentRecipient, currentGroup)
                 .start();
+    }
+
+    private void createQueueDefault(String queueName) throws IOException {
+        channel.queueDeclare(queueName, true, false, false, queueCreationArgs);
     }
 
     public static void setChannel(Channel channel) {
