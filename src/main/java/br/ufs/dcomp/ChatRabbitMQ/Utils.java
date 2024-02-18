@@ -1,7 +1,10 @@
 package br.ufs.dcomp.ChatRabbitMQ;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Properties;
 
 public class Utils {
     
@@ -24,4 +27,13 @@ public class Utils {
         return time;
 
     }
+
+    public static Properties getProps() throws IOException {
+		Properties props = new Properties();
+		FileInputStream file = new FileInputStream(
+				"./properties/config.properties");
+		props.load(file);
+		return props;
+
+	}
 }

@@ -54,7 +54,7 @@ public class Chat {
 
   public static void main(String[] argv) throws Exception {
 
-    Properties properties = PropertiesUtil.getProps();
+    Properties properties = Utils.getProps();
 
     String host = properties.getProperty("rabbitmq.host");
     String user = properties.getProperty("rabbitmq.user");
@@ -132,7 +132,6 @@ public class Chat {
           }
           String filePath = args[1];
           client.sendFile(filePath, currentUser, currentRecipient, currentGroup);
-          // System.out.print(Chat.getPromptText());
         } else {
           System.out.println("[!] O comando \"" + methodStr + "\" não existe.");
         }
