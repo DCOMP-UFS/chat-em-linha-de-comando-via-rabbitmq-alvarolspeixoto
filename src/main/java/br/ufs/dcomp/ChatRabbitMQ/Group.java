@@ -26,7 +26,7 @@ public class Group {
 
     public static void addUser(String username, String group) throws IOException {
         if (checkIfUserExists(username) && checkIfGroupExists(group)) {
-            channel.queueBind(username + "text", group, "t");
+            channel.queueBind(username + "-text", group, "t");
             channel.queueBind(username + "-file", group, "f");
         }
     }
