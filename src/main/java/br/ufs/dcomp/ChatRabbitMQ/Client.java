@@ -29,8 +29,8 @@ public class Client {
         Client.channel = channel;
         queueCreationArgs = new HashMap<>();
         queueCreationArgs.put("x-queue-type", "quorum");
-        queueCreationArgs.put("x-quorum-initial-group-size", 3);
-        queueCreationArgs.put("x-quorum-group-size", 3);
+        queueCreationArgs.put("x-quorum-initial-group-size", 4);
+        queueCreationArgs.put("x-quorum-group-size", 4);
     }
 
     public void startClient() throws IOException {
