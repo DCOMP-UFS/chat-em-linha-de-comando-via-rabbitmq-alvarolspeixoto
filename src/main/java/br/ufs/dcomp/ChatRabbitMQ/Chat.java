@@ -65,6 +65,10 @@ public class Chat {
     return host;
   }
 
+  public static String getCurrentUser() {
+    return currentUser;
+  }
+
   public enum PromptMode {
     NONE, // o que é digitado não é enviado para ninguém
     PRIVATE, // enviado p/ destinatário específico
@@ -121,9 +125,14 @@ public class Chat {
 
           argList.remove(0);
           
-          String[] test = {"removeGroup", "addGroup", "listUsers", "listGroups"};
+          String[] oneArgMethods = {"removeGroup", "addGroup", "listUsers"};
 
-          if (Arrays.asList(test).contains(methodStr)) {
+          if (methodStr.equals("listGroups")) {
+            Group.listGroups();
+            continue;
+          }
+
+          else if (Arrays.asList(oneArgMethods).contains(methodStr)) {
 
             method = Group.class.getDeclaredMethod(methodStr, String.class);
             promptMode = PromptMode.NONE;

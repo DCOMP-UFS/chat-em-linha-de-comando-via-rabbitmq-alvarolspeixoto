@@ -11,7 +11,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.rabbitmq.client.*;
 
-
 public class Group {
 
     private static Channel channel;
@@ -85,7 +84,7 @@ public class Group {
         }
     }
 
-    public static void listUsers(String group) {
+    private static Response makeHttpRequest(String path) {
 
         try {
 
@@ -97,46 +96,92 @@ public class Group {
             // Perform a request
             String restResource = "http://rabbitmq-load-balancer-b6fe6ab2cdb806fd.elb.us-east-1.amazonaws.com";
             javax.ws.rs.client.Client client = ClientBuilder.newClient();
-            Response resposta = client.target(restResource)
+            Response response = client.target(restResource)
                     // .path("/api/exchanges/%2f/ufs/bindings/source") // lista todos os binds que
                     // tem o exchange "ufs" como source
-                    .path("/api/exchanges/%2F/" + group + "/bindings/source")
+                    .path(path)
                     .request(MediaType.APPLICATION_JSON)
-                    .header(authorizationHeaderName, authorizationHeaderValue) // The basic authentication header goes
-                                                                               // here
-                    .get(); // Perform a post with the form values
-
-            if (resposta.getStatus() == 200) {
-                String json = resposta.readEntity(String.class);
-                JSONArray jsonArr = new JSONArray(json);
-                
-                List<String> users = new ArrayList<>();
-
-                for (int i = 0; i < jsonArr.length(); i++) {
-                    JSONObject obj = jsonArr.getJSONObject(i);
-
-                    String currentUser = obj.getString("destination").split("-")[0];
-
-                    if (!users.contains(currentUser)) {
-                        users.add(currentUser);
-                    }
-
-                }
-
-                String usersStr = String.join(", ", users);
-
-                System.out.println(usersStr);
-
-            } else {
-                System.out.println(resposta.getStatus());
-            }
-        } catch (Exception e) {
+                    .header(authorizationHeaderName, authorizationHeaderValue)                                                          // // here
+                    .get();
+            return response;
+        } // Perform a post with the form values
+        catch (Exception e) {
             e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static void listUsers(String group) {
+
+        Response response = makeHttpRequest("/api/exchanges/%2F/" + group + "/bindings/source");
+
+        if (response == null) {
+            return;
+        }
+
+        if (response.getStatus() == 200) {
+            String json = response.readEntity(String.class);
+            JSONArray jsonArr = new JSONArray(json);
+
+            List<String> users = new ArrayList<>();
+
+            for (int i = 0; i < jsonArr.length(); i++) {
+                JSONObject obj = jsonArr.getJSONObject(i);
+
+                String currentUser = obj.getString("destination").split("-")[0];
+
+                if (!users.contains(currentUser))
+                    users.add(currentUser);
+
+            }
+
+            String usersStr = Group.formatListInStr(users);
+
+
+            System.out.println(usersStr);
+
+        } else {
+            System.out.println(response.getStatus());
         }
     }
 
-    public void listGroups() {
+    public static void listGroups() {
 
+        Response response = makeHttpRequest("/api/queues/%2F/" + Chat.getCurrentUser() + "-text" + "/bindings");
+
+        if (response == null) {
+            return;
+        }
+
+        if (response.getStatus() == 200) {
+            String json = response.readEntity(String.class);
+            JSONArray jsonArr = new JSONArray(json);
+
+            List<String> groups = new ArrayList<>();
+
+            for (int i = 0; i < jsonArr.length(); i++) {
+                JSONObject obj = jsonArr.getJSONObject(i);
+
+                String currentGroup = obj.getString("source").split("-")[0];
+
+                if (!currentGroup.equals(""))
+                    groups.add(currentGroup);
+
+            }
+
+            String groupsStr = Group.formatListInStr(groups);
+            System.out.println(groupsStr);
+
+        } else {
+            System.out.println(response.getStatus());
+        }
+
+    }
+
+    private static String formatListInStr(List<String> list) {
+        return list.size() == 0 ? "[!] Esse usuário não faz parte de nenhum grupo" :
+        String.join(", ", list);
     }
 
 }
