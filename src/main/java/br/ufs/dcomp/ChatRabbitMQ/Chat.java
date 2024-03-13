@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 public class Chat {
 
   private static String promptText = "";
-  private static String[] commands = { "addGroup", "addUser", "delFromGroup", "removeGroup" };
+  private static String[] commands = { "addGroup", "addUser", "delFromGroup", "removeGroup", "listUsers", "listGroups" };
   private static Connection connection;
   private static Channel channel;
   private final static String promptSymbol = ">>";
@@ -22,9 +22,16 @@ public class Chat {
   private static String currentUser = "";
   private static String currentRecipient = "";
   private static String currentGroup = "";
+  private static String host;
+  private static String user;
+  private static String password;
+
 
   public static void setup(String host, String username, String password) throws IOException, TimeoutException {
     ConnectionFactory factory = new ConnectionFactory();
+    Chat.host = host;
+    Chat.user = username;
+    Chat.password = password;
     factory.setHost(host);
     factory.setPort(5672);
     factory.setUsername(username);
@@ -46,6 +53,18 @@ public class Chat {
     return connection;
   }
 
+  public static String getPassword() {
+    return password;
+  }
+
+  public static String getUser() {
+    return user;
+  }
+
+  public static String getHost() {
+    return host;
+  }
+
   public enum PromptMode {
     NONE, // o que é digitado não é enviado para ninguém
     PRIVATE, // enviado p/ destinatário específico
@@ -55,7 +74,7 @@ public class Chat {
   public static void main(String[] argv) throws Exception {
 
     Properties properties = Utils.getProps();
-
+    
     String host = properties.getProperty("rabbitmq.host");
     String user = properties.getProperty("rabbitmq.user");
     String password = properties.getProperty("rabbitmq.password");
@@ -101,7 +120,10 @@ public class Chat {
           List<Object> argList = new ArrayList<Object>(temp);
 
           argList.remove(0);
-          if (methodStr.equals("removeGroup") || methodStr.equals("addGroup")) {
+          
+          String[] test = {"removeGroup", "addGroup", "listUsers", "listGroups"};
+
+          if (Arrays.asList(test).contains(methodStr)) {
 
             method = Group.class.getDeclaredMethod(methodStr, String.class);
             promptMode = PromptMode.NONE;
