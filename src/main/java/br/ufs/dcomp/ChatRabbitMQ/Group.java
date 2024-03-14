@@ -32,14 +32,14 @@ public class Group {
     }
 
     public static void addUser(String username, String group) throws IOException {
-        if (checkIfUserExists(username) && checkIfGroupExists(group)) {
+        if (checkIfUserExists(username, true, false) && checkIfGroupExists(group)) {
             channel.queueBind(username + "-text", group, "t");
             channel.queueBind(username + "-file", group, "f");
         }
     }
 
     public static void delFromGroup(String username, String group) throws IOException {
-        if (checkIfUserExists(username) && checkIfGroupExists(group)) {
+        if (checkIfUserExists(username, true, false) && checkIfGroupExists(group)) {
             channel.queueUnbind(username + "-text", group, "t");
             channel.queueUnbind(username + "-file", group, "f");
         }
@@ -69,15 +69,19 @@ public class Group {
         }
     }
 
-    private static boolean checkIfUserExists(String username) throws IOException {
+    public static boolean checkIfUserExists(String username, boolean showError, boolean isInitialization)
+            throws IOException {
         try {
             channel.queueDeclarePassive(username + "-text");
             return true;
         } catch (IOException e) {
-            System.out.println("[!] O usuário \"" + username + "\" não existe.");
+            if (showError)
+                System.out.println("[!] O usuário \"" + username + "\" não existe.");
             Channel newChannel = connection.createChannel();
-            newChannel.basicConsume(Client.getTextQueueName(), true, Client.getTextConsumer());
-            newChannel.basicConsume(Client.getFileQueueName(), true, Client.getFileConsumer());
+            if (!isInitialization) {
+                newChannel.basicConsume(Client.getTextQueueName(), true, Client.getTextConsumer());
+                newChannel.basicConsume(Client.getFileQueueName(), true, Client.getFileConsumer());
+            }
             Group.channel = newChannel;
             Client.setChannel(newChannel);
             return false;
@@ -101,7 +105,7 @@ public class Group {
                     // tem o exchange "ufs" como source
                     .path(path)
                     .request(MediaType.APPLICATION_JSON)
-                    .header(authorizationHeaderName, authorizationHeaderValue)                                                          // // here
+                    .header(authorizationHeaderName, authorizationHeaderValue) // // here
                     .get();
             return response;
         } // Perform a post with the form values
@@ -137,7 +141,6 @@ public class Group {
             }
 
             String usersStr = Group.formatListInStr(users);
-
 
             System.out.println(usersStr);
 
@@ -180,8 +183,7 @@ public class Group {
     }
 
     private static String formatListInStr(List<String> list) {
-        return list.size() == 0 ? "[!] Esse usuário não faz parte de nenhum grupo" :
-        String.join(", ", list);
+        return list.size() == 0 ? "[!] Esse usuário não faz parte de nenhum grupo" : String.join(", ", list);
     }
 
 }

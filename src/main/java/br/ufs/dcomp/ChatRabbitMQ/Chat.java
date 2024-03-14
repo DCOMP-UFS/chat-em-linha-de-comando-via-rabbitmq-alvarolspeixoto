@@ -90,9 +90,9 @@ public class Chat {
     System.out.print("User: ");
     currentUser = scanner.nextLine().trim();
     Client client = new Client(currentUser, channel);
-    client.startClient();
     Group.setChannel(channel);
     Group.setConnection(connection);
+    client.startClient();
 
     promptText = promptSymbol;
 

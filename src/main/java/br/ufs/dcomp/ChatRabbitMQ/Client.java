@@ -36,8 +36,10 @@ public class Client {
     public void startClient() throws IOException {
 
         // (queue-name, durable, exclusive, auto-delete, params);
-        createQueueDefault(textQueueName);
-        createQueueDefault(fileQueueName);
+        if (!Group.checkIfUserExists(username, false, true)) {
+            createQueueDefault(textQueueName);
+            createQueueDefault(fileQueueName);
+        }
 
         Consumer textConsumer = new DefaultConsumer(channel) {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
@@ -142,8 +144,10 @@ public class Client {
 
     public void setRecipient(String recipient) throws IOException {
         this.recipient = recipient;
-        createQueueDefault(recipient + "-text");
-        createQueueDefault(recipient + "-file");
+        if (!Group.checkIfUserExists(recipient, false, false)) {
+            createQueueDefault(recipient + "-text");
+            createQueueDefault(recipient + "-file");
+        }
     }
 
     public void sendMessage(String body, String sender, String group) throws UnsupportedEncodingException, IOException {
