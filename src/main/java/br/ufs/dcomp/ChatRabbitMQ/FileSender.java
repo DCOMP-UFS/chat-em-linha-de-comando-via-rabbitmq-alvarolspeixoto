@@ -62,7 +62,7 @@ public class FileSender extends Thread {
         MessageProto.Message message = messageProto.build();
 
         if (group.equals("")) {
-            channel.basicPublish("", "file-" + recipient, null, message.toByteArray());
+            channel.basicPublish("", recipient + "-file", null, message.toByteArray());
         } else {
             channel.basicPublish(group, "f", null, message.toByteArray());
         }
