@@ -1,4 +1,4 @@
 target/
 bin/
-*.properties
+config.properties
 *.pem
