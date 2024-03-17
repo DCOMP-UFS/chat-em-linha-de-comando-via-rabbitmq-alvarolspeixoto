@@ -86,7 +86,7 @@ public class Client {
                 byte[] file = content.getBody().toByteArray();
                 String fileName = content.getName();
 
-                String defaultOutputPath = "/home/alvaro022/files";
+                String defaultOutputPath = Utils.getProps().getProperty("outputPath");
 
                 try {
                     Path outputPath = Paths.get(defaultOutputPath, fileName);
